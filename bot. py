@@ -1,0 +1,42 @@
+import requests
+import time
+
+TOKEN = "8793772063:AAGGPCah10LLEK3AXkcrXKmWM4xKkbamHTE"
+CHAT_ID = "7301534362"
+
+symbols = ["BTCUSDT", "ETHUSDT"]
+
+def send(msg):
+    url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
+    requests.post(url, data={"chat_id": CHAT_ID, "text": msg})
+
+def get_data(symbol):
+    url = f"https://api.binance.com/api/v3/klines?symbol={symbol}&interval=1m&limit=20"
+    data = requests.get(url).json()
+    return [float(i[4]) for i in data]
+
+def signal(prices):
+    avg = sum(prices[-10:]) / 10
+    last = prices[-1]
+
+    if last > avg:
+        return "BUY"
+    elif last < avg:
+        return "SELL"
+    return None
+
+while True:
+    try:
+        for sym in symbols:
+            prices = get_data(sym)
+            sig = signal(prices)
+
+            if sig:
+                send(f"🤖 GitHub Bot Signal\n\n{sym} → {sig}")
+
+        print("Running...")
+
+    except Exception as e:
+        print(e)
+
+    time.sleep(60)
